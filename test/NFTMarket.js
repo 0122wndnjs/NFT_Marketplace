@@ -142,4 +142,40 @@ describe("NFT Marketplace", function () {
       expect(newTokenOwner).to.equal(nftMarketAddress);
     });
   });
+
+  describe("Fetch marketplace items", function () {
+    const tokenURI = "https://some-token.uri";
+
+    it("Should fetch the correct number of unsold items", async () => {
+      await mintAndListNFT(tokenURI, auctionPrice);
+      await mintAndListNFT(tokenURI, auctionPrice);
+      await mintAndListNFT(tokenURI, auctionPrice);
+
+      let unsoldItems = await nftMarket.fetchMarketItems();
+      expect(unsoldItems.length).is.equal(3);
+    });
+
+    it("Should fetch correct number of items that a user has purchased", async () => {
+      let nftToken = await mintAndListNFT(tokenURI, auctionPrice);
+      await mintAndListNFT(tokenURI, auctionPrice);
+      await mintAndListNFT(tokenURI, auctionPrice);
+
+      await nftMarket
+        .connect(buyerAddress)
+        .createMarketSale(nftToken, { value: auctionPrice });
+
+      let buyerTotalItems = await nftMarket.connect(buyerAddress).fetchMyNFTs();
+      expect(buyerTotalItems.length).is.equal(1);
+    });
+
+    it("Should fetch correct number of items listed by a user", async () => {
+      await mintAndListNFT(tokenURI, auctionPrice);
+      await mintAndListNFT(tokenURI, auctionPrice);
+      await nftMarket
+        .connect(buyerAddress)
+        .createToken(tokenURI, auctionPrice, { value: listingPrice });
+      let ownerlistings = await nftMarket.fetchItemsListed();
+      expect(ownerlistings.length).to.equal(2);
+    });
+  });
 });

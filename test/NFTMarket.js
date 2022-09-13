@@ -29,4 +29,46 @@ describe("NFT Marketplace", function () {
     const tokenID = receipt.events[0].args.tokenId;
     return tokenID;
   };
+
+  describe("Mint and list a new NFT token", function () {
+    const tokenURI = "https://some-token.uri";
+
+    it("Should revert if price is zero", async () => {
+      await expect(mintAndListNFT(tokenURI, 0)).to.be.revertedWith(
+        "Price must be greater than zero"
+      );
+    });
+
+    it("Should revert if listing price is not correct", async function () {
+      await expect(
+        nftMarket.createToken(tokenURI, auctionPrice, { value: 0 })
+      ).to.be.revertedWith("Price must be equal to listing price");
+    });
+
+    it("Should create an NFT with the correct owner and tokenURI", async function () {
+      const tokenID = await mintAndListNFT(tokenURI, auctionPrice);
+      const mintedTokenURI = await nftMarket.tokenURI(tokenID);
+      const ownerAddress = await nftMarket.ownerOf(tokenID);
+
+      expect(ownerAddress).to.equal(nftMarketAddress);
+      expect(mintedTokenURI).to.equal(tokenURI);
+    });
+
+    it("Should emit MarketItemCreated after successfully listing of NFT", async function () {
+      const transaction = await nftMarket.createToken(tokenURI, auctionPrice, {
+        value: listingPrice,
+      });
+      const receipt = await transaction.wait();
+      const tokenID = receipt.events[0].args.tokenId;
+      await expect(transaction)
+        .to.emit(nftMarket, "MarketItemCreated")
+        .withArgs(
+          tokenID,
+          contractOwner.address,
+          nftMarketAddress,
+          auctionPrice,
+          false
+        );
+    });
+  });
 });

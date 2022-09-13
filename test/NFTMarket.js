@@ -178,4 +178,27 @@ describe("NFT Marketplace", function () {
       expect(ownerlistings.length).to.equal(2);
     });
   });
+
+  describe("Cancel a Marketplace listing", function () {
+    const tokenURI = "https://some-token.uri";
+
+    it("Should cancel and return the correct number of listings", async () => {
+      let nftToken = await mintAndListNFT(tokenURI, auctionPrice);
+      await nftMarket
+        .connect(buyerAddress)
+        .createToken(tokenURI, auctionPrice, { value: listingPrice });
+      await nftMarket
+        .connect(buyerAddress)
+        .createToken(tokenURI, auctionPrice, { value: listingPrice });
+
+      let unsoldItems = await nftMarket.fetchMarketItems();
+      await expect(unsoldItems.length).is.equal(3);
+
+      await nftMarket.cancelItemListing(nftToken);
+
+      let newUnsoldItems = await nftMarket.fetchMarketItems();
+
+      await expect(newUnsoldItems.length).is.equal(2);
+    });
+  });
 });

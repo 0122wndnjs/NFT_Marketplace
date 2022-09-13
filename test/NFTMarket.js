@@ -71,4 +71,34 @@ describe("NFT Marketplace", function () {
         );
     });
   });
+
+  describe("Execute sale of a marketplace item", function () {
+    const tokenURI = "https://some-token.uri";
+
+    it("Should revert if auction price is not correct", async () => {
+      const newNftToken = await mintAndListNFT(tokenURI, auctionPrice);
+      await expect(
+        nftMarket
+          .connect(buyerAddress)
+          .createMarketSale(newNftToken, { value: 20 })
+      ).to.be.revertedWith(
+        "Please submit the asking price in order to complete the purchase"
+      );
+    });
+
+    it("Buy a new token and check token owner address", async () => {
+      const newNftToken = await mintAndListNFT(tokenURI, auctionPrice);
+      const oldOwnerAddress = await nftMarket.ownerOf(newNftToken);
+
+      // Now the owner is the marketplace address
+      expect(oldOwnerAddress).to.equal(nftMarketAddress);
+      await nftMarket
+        .connect(buyerAddress)
+        .createMarketSale(newNftToken, { value: auctionPrice });
+
+      const newOwnerAddress = await nftMarket.ownerOf(newNftToken);
+      // Now the new owner is the buyer address
+      expect(newOwnerAddress).to.equal(buyerAddress.address);
+    });
+  });
 });

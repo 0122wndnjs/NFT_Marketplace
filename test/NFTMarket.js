@@ -101,4 +101,45 @@ describe("NFT Marketplace", function () {
       expect(newOwnerAddress).to.equal(buyerAddress.address);
     });
   });
+
+  describe("Resale of a marketplace item", function () {
+    const tokenURI = "https://some-token.uri";
+
+    it("Should revert if the token owner or listing price is not correct", async () => {
+      const newNftToken = await mintAndListNFT(tokenURI, auctionPrice);
+      await nftMarket
+        .connect(buyerAddress)
+        .createMarketSale(newNftToken, { value: auctionPrice });
+      await expect(
+        nftMarket.resellToken(newNftToken, auctionPrice, {
+          value: listingPrice,
+        })
+      ).to.be.revertedWith("Only item owner can perform this operation");
+      await expect(
+        nftMarket
+          .connect(buyerAddress)
+          .resellToken(newNftToken, auctionPrice, { value: 0 })
+      ).to.be.revertedWith("Price must be equal to listing price");
+    });
+
+    it("Buy a new token and then resell it", async () => {
+      const newNftToken = await mintAndListNFT(tokenURI, auctionPrice);
+      await nftMarket
+        .connect(buyerAddress)
+        .createMarketSale(newNftToken, { value: auctionPrice });
+
+      const tokenOwnerAddress = await nftMarket.ownerOf(newNftToken);
+      // Now the new owner is the buyer address
+      expect(tokenOwnerAddress).to.equal(buyerAddress.address);
+
+      await nftMarket
+        .connect(buyerAddress)
+        .resellToken(newNftToken, auctionPrice, { value: listingPrice });
+
+      const newTokenOwner = await nftMarket.ownerOf(newNftToken);
+
+      // Now the new owner should be the marketplace address
+      expect(newTokenOwner).to.equal(nftMarketAddress);
+    });
+  });
 });

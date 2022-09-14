@@ -7,7 +7,7 @@ import NFTMarketplace from "../abi/NFTMarketplace.json";
 import axios from "axios";
 import Image from "next/image";
 
-export default function createNFT() {
+export default function CreateNFT() {
   const [fileUrl, setFileUrl] = useState(null);
   const [formInput, updateFormInput] = useState({
     price: "",
